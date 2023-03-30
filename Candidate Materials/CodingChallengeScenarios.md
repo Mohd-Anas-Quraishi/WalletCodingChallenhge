@@ -1,6 +1,3 @@
-# WalletCodingChallenhge
-
-
 # Scenarios
 
 ## Creating wallets

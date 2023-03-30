@@ -1,0 +1,259 @@
+openapi: 3.0.3
+info:
+  title: Wallet Coding Challenge
+  description: >
+    The openapi specification for the wallet coding challenge that is set by Admiral's Customer Engagement tribe. The challenge is to create an API which matches the specification below which allows a customer to create and view a wallet, apply some transcations (debit and withdrawls) and view a list of all transcations for a specific wallet.  
+  version: 1.0.0
+  contact:
+    name: Admiral Customer Engagement Tribe
+servers:
+- url: http://localhost:3000
+tags:
+  - name: wallet
+    description: Manage wallets
+  - name: transactions
+    description: Manage transactions
+paths:
+  /wallet:
+    post:
+      summary: Create a new wallet
+      operationId: createNewWallet
+      requestBody:
+        description: Details of the new wallet
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletRequest'
+        required: true
+      responses:
+        201:
+          description: Wallet has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        400:
+          description: Invalid request body supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: An internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - wallet
+  /wallet/{walletId}:
+    get:
+      summary: Fetch wallet by ID
+      operationId: fetchWalletById
+      parameters:
+        - name: walletId
+          in: path
+          description: ID of wallet to return
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The wallet was fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        404:
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: An internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - wallet
+  /wallet/{walletId}/transactions:
+    post:
+      summary: Create transaction on wallet
+      operationId: createTransaction
+      parameters:
+        - name: walletId
+          in: path
+          description: ID of wallet
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Type of transaction
+          required: true
+          schema:
+            type: string
+            enum: [credit, debit]
+      requestBody:
+        description: Details of the transaction to create against the wallet
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+        required: true
+      responses:
+        201:
+          description: Transaction has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        400:
+          description: Invalid request body supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: An internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'  
+      tags:
+        - wallet
+        - transactions
+    get:
+      summary: Fetch transactions for wallet
+      operationId: fetchTransactionsForWallet
+      parameters:
+        - name: walletId
+          in: path
+          description: ID of wallet
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: The transactions have been successfully fetched for the wallet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+        404:
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        500:
+          description: An internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - wallet
+        - transactions
+components:
+  schemas:
+    WalletRequest:
+      type: object
+      required:
+        - balance
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the wallet
+          example: savings pot
+        balance:
+          type: number
+          minimum: 0
+          description: The opening balance of the wallet
+          example: 10.23
+    WalletResponse:
+      type: object
+      required:
+        - id
+        - balance
+        - name
+        - createdDate
+      properties:
+        id:
+          type: string
+          description: The ID of the wallet
+        name:
+          type: string
+          description: The name of the wallet
+          example: savings pot
+        balance:
+          type: number
+          description: The current balance of the wallet
+          example: 10.23
+        createdDate:
+          type: string
+          format: date-time
+          description: Timestamp when the wallet was created
+    TransactionRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          description: The amount that was deposited i.e 12.22 or withdrawn i.e. -50.00
+          example: 12.22
+        description:
+          type: string
+          description: The reason for the transaction
+    TransactionListResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/TransactionResponse'
+    TransactionResponse:
+      type: object
+      required:
+        - id
+        - walletId
+        - amount
+        - balance
+        - createdDate
+      properties:
+        id:
+          type: string
+          description: The ID of the transaction
+        walletId:
+          type: string
+          description: The ID of the wallet the transaction is associated with
+        amount:
+          type: number
+          description: The amount that was deposited i.e 12.22 or withdrawn i.e. -50.00
+          example: 12.22
+        balance:
+          type: number
+          description: The balance after the transaction was applied
+          example: 65.87
+        description:
+          type: string
+          description: The reason for the transaction
+        createdDate:
+          type: string
+          format: date-time
+          description: Timestamp when the transaction was created
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The reason for the error
